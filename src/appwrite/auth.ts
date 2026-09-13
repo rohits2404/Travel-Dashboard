@@ -166,21 +166,24 @@ export const getUser = async (): Promise<User> => {
     }
 };
 
-export const getAllUsers = async (limit: number, offset: number) => {
+export const getAllUsers = async (
+    limit: number,
+    offset: number,
+): Promise<{ users: User[]; total: number }> => {
     const { databases } = await createAdminClient();
 
     try {
-        const { rows: users, total } = await databases.listRows({
+        const { rows, total } = await databases.listRows({
             databaseId: appwriteConfig.databaseId,
             tableId: appwriteConfig.userCollectionId,
             queries: [Query.limit(limit), Query.offset(offset)],
         });
 
-        if (total === 0) return { users: [], total };
+        const users = rows.map(mapUser);
 
-        return { users: parseStringify(users), total };
-    } catch (e) {
-        console.log("Error fetching users");
+        return { users, total };
+    } catch (error) {
+        console.error("Error fetching users:", error);
         return { users: [], total: 0 };
     }
 };

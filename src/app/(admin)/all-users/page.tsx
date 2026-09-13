@@ -1,14 +1,18 @@
+import { getAllUsers } from "@/appwrite/auth";
 import { Header } from "@/components/Header";
-import React from "react";
+import AllUsersTable from "@/components/admin/AllUsersTable";
 
-const AllUsers = () => {
+const AllUsers = async () => {
+    const { users } = await getAllUsers(10, 0);
+
     return (
-        <main className="dashboard wrapper">
+        <main className="all-users wrapper">
             <Header
-                title="Trips Page"
-                description="Check Out Our Current Users In Real Time"
+                title="Manage Users"
+                description="Filter, Sort, And Access Detailed User Profiles"
             />
-            All Users Page Contents
+
+            <AllUsersTable users={users} />
         </main>
     );
 };
