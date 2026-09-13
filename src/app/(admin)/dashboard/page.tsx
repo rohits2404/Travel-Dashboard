@@ -1,10 +1,18 @@
+import { getUser } from "@/appwrite/auth";
 import { Header } from "@/components/Header";
 import { StatsCard } from "@/components/StatsCard";
 import { TripCard } from "@/components/TripCard";
-import { allTrips, dashboardStats, user } from "@/constants";
+import { allTrips, dashboardStats } from "@/constants";
+import { redirect } from "next/navigation";
 import React from "react";
 
-const Dashboard = () => {
+const Dashboard = async () => {
+    const user = await getUser();
+
+    if (user.status !== "admin") {
+        redirect("/");
+    }
+
     const { totalUsers, usersJoined, totalTrips, tripsCreated, userRole } =
         dashboardStats;
 

@@ -1,6 +1,8 @@
 import type { AxisModel } from "@syncfusion/ej2-react-charts";
 import { formatDate } from "@/lib/utils";
 
+export const SESSION_COOKIE = "appwrite-session";
+
 export const sidebarItems = [
     {
         id: 1,

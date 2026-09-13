@@ -4,15 +4,16 @@ import { sidebarItems } from "@/constants";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { User } from "@/types";
 
-export const NavItems = ({ handleClick }: { handleClick?: () => void }) => {
+export const NavItems = ({
+    user,
+    handleLogout,
+}: {
+    user: User;
+    handleLogout: () => Promise<void>;
+}) => {
     const pathname = usePathname();
-
-    const user = {
-        name: "Adrian",
-        email: "contact@jsmastery.pro",
-        imageUrl: "/assets/images/david.webp",
-    };
 
     return (
         <section className="nav-items">
@@ -22,6 +23,7 @@ export const NavItems = ({ handleClick }: { handleClick?: () => void }) => {
                     alt="logo"
                     className="size-7.5"
                 />
+
                 <h1>Tourvisto</h1>
             </Link>
 
@@ -36,7 +38,6 @@ export const NavItems = ({ handleClick }: { handleClick?: () => void }) => {
                                     className={cn("group nav-item", {
                                         "bg-primary-100 text-white!": isActive,
                                     })}
-                                    onClick={handleClick}
                                 >
                                     <img
                                         src={icon}
@@ -49,6 +50,7 @@ export const NavItems = ({ handleClick }: { handleClick?: () => void }) => {
                                             },
                                         )}
                                     />
+
                                     {label}
                                 </div>
                             </Link>
@@ -58,7 +60,7 @@ export const NavItems = ({ handleClick }: { handleClick?: () => void }) => {
 
                 <footer className="nav-footer">
                     <img
-                        src={user.imageUrl}
+                        src={user.imageUrl || "/assets/icons/avatar.svg"}
                         alt={user.name}
                         referrerPolicy="no-referrer"
                     />
@@ -69,7 +71,8 @@ export const NavItems = ({ handleClick }: { handleClick?: () => void }) => {
                     </article>
 
                     <button
-                        onClick={() => console.log("logout")}
+                        type="button"
+                        onClick={handleLogout}
                         className="cursor-pointer"
                     >
                         <img

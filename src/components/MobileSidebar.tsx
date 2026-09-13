@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRef } from "react";
 import { SidebarComponent } from "@syncfusion/ej2-react-navigations";
 import { NavItems } from "./NavItems";
+import type { User } from "@/types";
 
-export const MobileSidebar = () => {
+export const MobileSidebar = ({ user }: { user: User }) => {
     const sidebarRef = useRef<SidebarComponent | null>(null);
 
     const toggleSidebar = () => {
@@ -42,7 +43,7 @@ export const MobileSidebar = () => {
                 showBackdrop={true}
                 type="Over"
             >
-                <NavItems handleClick={toggleSidebar} />
+                <NavItems user={user} handleClick={toggleSidebar} />
             </SidebarComponent>
         </div>
     );
