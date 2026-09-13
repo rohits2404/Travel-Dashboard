@@ -543,3 +543,13 @@ body {
     top: 45px;
     right: 40px;
 }
+
+/* Global scrollbar removal */
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+    display: none;
+}
