@@ -11,28 +11,35 @@ export const formatDate = (dateString: string): string => {
 };
 
 export function parseMarkdownToJson(markdownText: string): unknown | null {
-    const regex = /```json\n([\s\S]+?)\n```/;
-    const match = markdownText.match(regex);
+    try {
+        // Remove markdown code fences if the AI included them
+        const cleaned = markdownText
+            .replace(/^```json\s*/i, "")
+            .replace(/^```\s*/i, "")
+            .replace(/\s*```$/i, "")
+            .trim();
 
-    if (match && match[1]) {
-        try {
-            return JSON.parse(match[1]);
-        } catch (error) {
-            console.error("Error parsing JSON:", error);
-            return null;
-        }
+        return JSON.parse(cleaned);
+    } catch (error) {
+        console.error("Failed to parse AI JSON:", error);
+        console.error("AI response:", markdownText);
+
+        return null;
     }
-    console.error("No valid JSON found in markdown text.");
-    return null;
 }
 
-export function parseTripData(jsonString: string): Trip | null {
-    try {
-        const data: Trip = JSON.parse(jsonString);
+export function parseTripData(
+    jsonString: string | null | undefined,
+): Trip | null {
+    if (!jsonString) {
+        console.warn("parseTripData: tripDetail is missing");
+        return null;
+    }
 
-        return data;
+    try {
+        return JSON.parse(jsonString) as Trip;
     } catch (error) {
-        console.error("Failed to parse trip data:", error);
+        console.error("Failed to parse tripDetail:", error);
         return null;
     }
 }
