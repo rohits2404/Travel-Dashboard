@@ -1,79 +1,78 @@
-import { getUser } from "@/appwrite/auth";
+import { getAllUsers, getUser } from "@/appwrite/auth";
+import {
+    getTripsByTravelStyle,
+    getUserGrowthPerDay,
+    getUsersAndTripsStats,
+} from "@/appwrite/dashboard";
+import { getAllTrips } from "@/appwrite/trips";
 import { Header } from "@/components/Header";
-import { StatsCard } from "@/components/StatsCard";
-import { TripCard } from "@/components/TripCard";
-import { allTrips, dashboardStats } from "@/constants";
-import { redirect } from "next/navigation";
-import React from "react";
+import { parseTripData } from "@/lib/utils";
+import { DashboardClient } from "@/components/admin/DashboardClient";
 
 const Dashboard = async () => {
-    const user = await getUser();
+    const [
+        user,
+        dashboardStats,
+        trips,
+        userGrowth,
+        tripsByTravelStyle,
+        allUsers,
+    ] = await Promise.all([
+        getUser(),
+        getUsersAndTripsStats(),
+        getAllTrips(4, 0),
+        getUserGrowthPerDay(),
+        getTripsByTravelStyle(),
+        getAllUsers(4, 0),
+    ]);
 
-    if (user.status !== "admin") {
-        redirect("/");
-    }
+    const allTrips = trips.allTrips
+        .map(({ $id, tripDetail, imageUrls }) => {
+            const parsedTrip = parseTripData(tripDetail);
 
-    const { totalUsers, usersJoined, totalTrips, tripsCreated, userRole } =
-        dashboardStats;
+            if (!parsedTrip) {
+                return null;
+            }
+
+            return {
+                ...parsedTrip,
+                id: $id,
+                imageUrls: imageUrls ?? [],
+            };
+        })
+        .filter((trip): trip is NonNullable<typeof trip> => trip !== null);
+
+    const tripCounts = trips.allTrips.reduce<Record<string, number>>(
+        (acc, trip) => {
+            if (trip.userId) {
+                acc[trip.userId] = (acc[trip.userId] ?? 0) + 1;
+            }
+
+            return acc;
+        },
+        {},
+    );
+
+    const mappedUsers: UsersItineraryCount[] = allUsers.users.map((user) => ({
+        imageUrl: user.imageUrl ?? "",
+        name: user.name,
+        count: tripCounts[user.accountId] ?? 0,
+    }));
 
     return (
         <main className="dashboard wrapper">
             <Header
                 title={`Welcome ${user?.name ?? "Guest"} 👋`}
-                description="Track Activity, Trends And Popular Destinations In Real Time"
+                description="Track activity, trends and popular destinations in real time"
             />
-            <section className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                    <StatsCard
-                        headerTitle="Total Users"
-                        total={totalUsers}
-                        currentMonthCount={usersJoined.currentMonth}
-                        lastMonthCount={usersJoined.lastMonth}
-                    />
-                    <StatsCard
-                        headerTitle="Total Trips"
-                        total={totalTrips}
-                        currentMonthCount={tripsCreated.currentMonth}
-                        lastMonthCount={tripsCreated.lastMonth}
-                    />
-                    <StatsCard
-                        headerTitle="Active Users"
-                        total={userRole.total}
-                        currentMonthCount={userRole.currentMonth}
-                        lastMonthCount={userRole.lastMonth}
-                    />
-                </div>
-            </section>
-            <section className="container">
-                <h1 className="text-xl font-semibold text-dark-100">
-                    Created Trips
-                </h1>
 
-                <div className="trip-grid">
-                    {allTrips
-                        .slice(0, 4)
-                        .map(
-                            ({
-                                id,
-                                name,
-                                imageUrls,
-                                itinerary,
-                                tags,
-                                estimatedPrice,
-                            }) => (
-                                <TripCard
-                                    key={id}
-                                    id={id.toString()}
-                                    name={name}
-                                    imageUrl={imageUrls[0]}
-                                    location={itinerary?.[0]?.location ?? ""}
-                                    tags={tags}
-                                    price={estimatedPrice}
-                                />
-                            ),
-                        )}
-                </div>
-            </section>
+            <DashboardClient
+                dashboardStats={dashboardStats}
+                allTrips={allTrips}
+                userGrowth={userGrowth}
+                tripsByTravelStyle={tripsByTravelStyle}
+                allUsers={mappedUsers}
+            />
         </main>
     );
 };
