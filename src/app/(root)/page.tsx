@@ -1,0 +1,262 @@
+import { getAllTrips } from "@/appwrite/trips";
+import { cn, parseTripData } from "@/lib/utils";
+import { Header } from "@/components/Header";
+import { TripCard } from "@/components/TripCard";
+import { TravelPager } from "@/components/root/TravelPager";
+import Link from "next/link";
+
+type PageProps = {
+    searchParams: Promise<{
+        page?: string;
+    }>;
+};
+
+const PAGE_SIZE = 8;
+
+type DestinationProps = {
+    containerClass?: string;
+    bigCard?: boolean;
+    rating: number;
+    title: string;
+    activityCount: number;
+    bgImage: string;
+};
+
+const FeaturedDestination = ({
+    containerClass = "",
+    bigCard = false,
+    rating,
+    title,
+    activityCount,
+    bgImage,
+}: DestinationProps) => (
+    <section
+        className={cn(
+            "rounded-[14px] overflow-hidden bg-cover bg-center size-full min-w-70",
+            containerClass,
+            bgImage,
+        )}
+    >
+        <div className="bg-linear200 h-full">
+            <article className="featured-card">
+                <div className="bg-white rounded-20 font-bold text-red-100 w-fit py-px px-3 text-sm">
+                    {rating}
+                </div>
+
+                <article className="flex flex-col gap-3.5">
+                    <h2
+                        className={cn(
+                            "text-lg font-semibold text-white",
+                            bigCard && "p-30-bold",
+                        )}
+                    >
+                        {title}
+                    </h2>
+
+                    <figure className="flex gap-2 items-center">
+                        <img
+                            src="/assets/images/david.webp"
+                            alt="user"
+                            className={cn(
+                                "size-4 rounded-full aspect-square",
+                                bigCard && "size-11",
+                            )}
+                        />
+
+                        <p
+                            className={cn(
+                                "text-xs font-normal text-white",
+                                bigCard && "text-lg",
+                            )}
+                        >
+                            {activityCount} activities
+                        </p>
+                    </figure>
+                </article>
+            </article>
+        </div>
+    </section>
+);
+
+export default async function TravelPage({ searchParams }: PageProps) {
+    const params = await searchParams;
+
+    const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+
+    const offset = (page - 1) * PAGE_SIZE;
+
+    const { allTrips, total } = await getAllTrips(PAGE_SIZE, offset);
+
+    const trips = allTrips
+        .map(({ $id, tripDetail, imageUrls }) => {
+            const parsedTrip = parseTripData(tripDetail);
+
+            if (!parsedTrip) {
+                return null;
+            }
+
+            return {
+                ...parsedTrip,
+                id: $id,
+                imageUrls: imageUrls ?? [],
+            };
+        })
+        .filter((trip): trip is NonNullable<typeof trip> => trip !== null);
+
+    return (
+        <main className="flex flex-col">
+            {/* Hero */}
+            <section className="travel-hero">
+                <div>
+                    <section className="travel-hero">
+                        <div>
+                            <section className="wrapper">
+                                <article>
+                                    <h1 className="p-72-bold text-dark-100">
+                                        Plan Your Trip with Ease
+                                    </h1>
+
+                                    <p className="text-dark-100">
+                                        Customize your travel itinerary in
+                                        minutes—pick your destination, set your
+                                        preferences, and explore with
+                                        confidence.
+                                    </p>
+                                </article>
+
+                                <Link
+                                    href="#trips"
+                                    className="button-class h-11! w-full! md:w-60! inline-flex items-center justify-center"
+                                >
+                                    <span className="p-16-semibold text-white">
+                                        Get Started
+                                    </span>
+                                </Link>
+                            </section>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            {/* Featured destinations */}
+            <section className="pt-20 wrapper flex flex-col gap-10 h-full">
+                <Header
+                    title="Featured Travel Destinations"
+                    description="Check out some of the best places you visit around the world"
+                />
+
+                <div className="featured">
+                    <article>
+                        <FeaturedDestination
+                            bgImage="bg-card-1"
+                            containerClass="h-1/3 lg:h-1/2"
+                            bigCard
+                            title="Barcelona Tour"
+                            rating={4.2}
+                            activityCount={196}
+                        />
+
+                        <div className="travel-featured">
+                            <FeaturedDestination
+                                bgImage="bg-card-2"
+                                bigCard
+                                title="London"
+                                rating={4.5}
+                                activityCount={512}
+                            />
+
+                            <FeaturedDestination
+                                bgImage="bg-card-3"
+                                bigCard
+                                title="Australia Tour"
+                                rating={3.5}
+                                activityCount={250}
+                            />
+                        </div>
+                    </article>
+
+                    <div className="flex flex-col gap-7.5">
+                        <FeaturedDestination
+                            containerClass="w-full h-[240px]"
+                            bgImage="bg-card-4"
+                            title="Spain Tour"
+                            rating={3.8}
+                            activityCount={150}
+                        />
+
+                        <FeaturedDestination
+                            containerClass="w-full h-[240px]"
+                            bgImage="bg-card-5"
+                            title="Japan"
+                            rating={5}
+                            activityCount={150}
+                        />
+
+                        <FeaturedDestination
+                            containerClass="w-full h-[240px]"
+                            bgImage="bg-card-6"
+                            title="Italy Tour"
+                            rating={4.2}
+                            activityCount={500}
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* Trips */}
+            <section id="trips" className="py-20 wrapper flex flex-col gap-10">
+                <Header
+                    title="Handpicked Trips"
+                    description="Browse well-planned trips designed for your travel style"
+                />
+
+                <div className="trip-grid">
+                    {trips.map((trip) => (
+                        <TripCard
+                            key={trip.id}
+                            id={trip.id}
+                            name={trip.name}
+                            imageUrl={trip.imageUrls[0] ?? ""}
+                            location={trip.itinerary?.[0]?.location ?? ""}
+                            tags={[trip.interests, trip.travelStyle].filter(
+                                Boolean,
+                            )}
+                            price={trip.estimatedPrice}
+                        />
+                    ))}
+                </div>
+
+                <TravelPager
+                    total={total}
+                    pageSize={PAGE_SIZE}
+                    currentPage={page}
+                />
+            </section>
+
+            {/* Footer */}
+            <footer className="h-28 bg-white">
+                <div className="wrapper footer-container">
+                    <Link href="/">
+                        <img
+                            src="/assets/icons/logo.svg"
+                            alt="logo"
+                            className="size-7.5"
+                        />
+
+                        <h1>Tourvisto</h1>
+                    </Link>
+
+                    <div>
+                        {["Terms & Conditions", "Privacy Policy"].map(
+                            (item) => (
+                                <Link href="/" key={item}>
+                                    {item}
+                                </Link>
+                            ),
+                        )}
+                    </div>
+                </div>
+            </footer>
+        </main>
+    );
+}
